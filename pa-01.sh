@@ -37,13 +37,17 @@ echo "====================="
 hexdump -C iv.bin
 
 # Creates amal's symbolic links to key.bin and iv.bin
-ln -s key.bin amal/key.bin
-ln -s iv.bin amal/iv.bin
+cd amal
+ln -s ../key.bin key.bin
+ln -s ../iv.bin  iv.bin
 
+cd ../basim
 # Creates basim's symbolic links to key.bin and iv.bin
-ln -s key.bin basim/key.bin
-ln -s iv.bin basim/iv.bin
+ln -s ../key.bin key.bin
+ln -s ../iv.bin iv.bin
 
+
+cd ../
 # Executes dispatcher
 echo
 echo "Starting Dispatcher Process..."

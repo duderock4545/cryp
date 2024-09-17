@@ -13,28 +13,29 @@
 
 void main(int argc, char *argv[]) {
 
+    // Constants and file descriptors
     uint8_t key[EVP_MAX_KEY_LENGTH] , iv[EVP_MAX_IV_LENGTH];
     unsigned key_len = SYMMETRIC_KEY_LEN;
     unsigned iv_len = INITVECTOR_LEN;
     int fd_key, fd_iv, fd_bunny, fd_control, fd_data;
-    // Create new blank file
-    FILE *log = fopen("amal/logAmal.txt", "w");
+
+    // Create log file
+    FILE *log = fopen("basim/logBasim.txt", "w");
     if (!log)
     {
-        fprintf(stderr, "Amal: couldn't create log file\n");
-        fclose(log);
+        fprintf(log, "Basim: couldn't create log file\n");
         exit(-1);
     }
 
     // Open control and data fd
     fd_control = atoi( argv[1] );
     fd_data = atoi( argv[2] );
- 
-    // Opens the key fd
+
+        // Opens the key fd
     fd_key = open("key.bin", O_RDONLY);
     if (fd_key == -1)
     {
-        fprintf(stderr, "\nAmal: Couln't open key.bin\n");
+        fprintf(log, "\nBasim: Couln't open key.bin\n");
         fclose(log);
         exit(-1);
     }
@@ -48,7 +49,7 @@ void main(int argc, char *argv[]) {
     // Opens the iv fd
     fd_iv = open("iv.bin", O_RDONLY);
     if(fd_iv == -1) {
-        fprintf(stderr, "\nAmal: Couldnt open iv.bin\n");
+        fprintf(log, "\nBasim: Couldnt open iv.bin\n");
         fclose(log);
         exit(-1);   
     }
@@ -59,19 +60,27 @@ void main(int argc, char *argv[]) {
     BIO_dump_fp(log, (const char *) iv, iv_len);
     close(fd_iv);
 
-    // Opens the bunny file descriptor
-    fd_bunny = open("bunny.mp4", O_RDONLY);
+    // Create bunny.decr file
+    FILE *bunny = fopen("bunny.decr", "w");
+    if (!bunny)
+    {
+        fprintf(log, "Basim: couldn't create bunny file\n");
+        exit(-1);
+    }
+
+    // Opens the bunny.decr fd
+    fd_bunny = open("bunny.decr", O_WRONLY);
     if(fd_bunny == -1) {
-        fprintf( log , "\nAmal: Couldnt open bunny\n");
+        fprintf(log, "\nBasim: Couldnt open bunny fd\n");
         fclose(log);
         exit(-1);   
     }
 
-    // Encrypt the file
-    int bunny_cipher_len = encryptFile( fd_bunny, fd_data, key, iv);
+    // Decrypts from fd_data
+    int decrypt_status = decryptFile(fd_data, fd_bunny, key, iv);
 
-    // Clean ups
+    // Cleans up code
+    close(fd_bunny);
     close(fd_data);
     close(fd_control);
-    close(fd_bunny);
 }

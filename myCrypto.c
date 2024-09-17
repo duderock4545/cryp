@@ -142,7 +142,6 @@ int encryptFile( int fd_in, int fd_out, const uint8_t *key, const uint8_t *iv )
     // Loops by reading a chunk of plaintext, encrypting it, then writing to fd_out
     while ( ( plaintext_len = read(fd_in, plaintext, PLAINTEXT_LEN_MAX) ) > 0 )
     {
-        fprintf(stdout, "\nplaintext_len  = %d\n", plaintext_len);
         // Encrypt the chunk of bytes read from fd_in
         status = EVP_EncryptUpdate(ctx, ciphertext, &update_len, plaintext, plaintext_len);
         if (status != 1)
@@ -153,21 +152,20 @@ int encryptFile( int fd_in, int fd_out, const uint8_t *key, const uint8_t *iv )
 
         // Writes ciphertext to fd_out
         write(fd_out, ciphertext, update_len);
-
-        // Reset plaintext array
-        //memset(plaintext, '\0', sizeof(plaintext));
     }
 
+    // Plaintext error check
     if (plaintext_len == -1)
-    {
         handleErrors("encrypt: failed to read plaintext");
-    }
+    
     // Finalize encryption
     status = EVP_EncryptFinal_ex(ctx, ciphertext, &update_len);
     if (status != 1)
         handleErrors("encrypt: failed to EncryptFinal_ex");
 
+    // Write the final encrypt
     write(fd_out, ciphertext, update_len);
+
     // Free context
     EVP_CIPHER_CTX_free(ctx);
 
@@ -179,19 +177,51 @@ int encryptFile( int fd_in, int fd_out, const uint8_t *key, const uint8_t *iv )
 // Decrypts fd_in, writes decryptext to fd_out, and return total decryptext bytes
 int decryptFile( int fd_in, int fd_out, const uint8_t *key, const uint8_t *iv )
 {
-    // // Num of bytes read per loop, total bytes of decrypted text
-    // int read_len, decrypt_len = 0;
+    // Num of bytes read per loop, total bytes of decryption
+    unsigned ciphertext_len, decrypted_len, update_len = 0;
 
-    // // Loops by reading a chunk of ciphertext, decrypting it, then writing to fd_out
-    // while ((read_len = read(fd_in, (char *) ciphertext, CIPHER_LEN_MAX)) > -1)
-    // {
-    //     // Decrypts the cipihertext given and saves the len of decrypted text
-    //     int write_len = decrypt((char *) ciphertext, read_len, key, iv, (char *) decryptext);
-    //     decrypt_len += write_len;
+    // Error status buffer
+    int status;
 
-    //     // Writes decrypted text to fd_out
-    //     write(fd_out, (char *) decryptext, write_len);
-    // }
+    // Create the context for the decryption
+    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+    if (!ctx) 
+        handleErrors("DecryptFile: failed to create CTX");
 
-    // return decrypt_len;
+    // Initialize the decryption
+    status = EVP_DecryptInit_ex (ctx, ALGORITHM(), NULL, key, iv);
+    if (status != 1)
+        handleErrors("DecryptFile: failed to EncryptInit_ex");
+    
+    // Loops by reading a chunk of ciphertext, decrypting it, then writing to fd_out
+    while ( ( ciphertext_len = read(fd_in, ciphertext, CIPHER_LEN_MAX) ) > 0 )
+    {
+        // Decrypt the chunk of bytes read from fd_in
+        status = EVP_DecryptUpdate(ctx, decryptext, &update_len, ciphertext, ciphertext_len);
+        if (status != 1)
+            handleErrors("DecryptFile: failed to DecryptUpdate");
+
+        // Update total decryption length
+        decrypted_len += update_len;
+
+        // Writes cecryptext to fd_out
+        write(fd_out, decryptext, update_len);
+    }
+
+    // Ciphertext error check
+    if (ciphertext_len == -1)
+        handleErrors("DecryptFile: failed to read ciphertext");
+    
+    // Finalize decryption
+    status = EVP_DecryptFinal_ex(ctx, decryptext, &update_len);
+    if (status != 1)
+        handleErrors("DecryptFile: failed to DecryptFinal_ex");
+
+    // Write the final decrypt
+    write(fd_out, decryptext, update_len);
+
+    // Free context
+    EVP_CIPHER_CTX_free(ctx);
+
+    return decrypted_len + update_len;
 }

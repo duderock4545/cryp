@@ -6,9 +6,9 @@ echo
 # Removes all files required
 rm -f genkey key.bin iv.bin
 rm -f amal/amal amal/logAmal.txt amal/ciphertext.bin
-rm -f basim/logBasim.txt basim/decryptedtext.bin
+rm -f basim/logBasim.txt basim/decryptedtext.bin basim/basim
 rm -f bunny.mp4 amal/key.bin amal/iv.bin basim/key.bin basim/iv.bin
-rm -f 4 6 dispatcher bunny.decr
+rm -f 4 6 dispatcher bunny.decr bunny.mp4
 
 # Creates symbolic link
 ln -s ../bunny.mp4 bunny.mp4
@@ -16,7 +16,7 @@ ln -s ../bunny.mp4 bunny.mp4
 # Builds the executibles
 gcc genkey.c -o genkey -lcrypto
 gcc amal/amal.c myCrypto.c -o amal/amal -lcrypto
-# gcc basim/basim.c myCrypto.c -o basim/basim -lcrypto
+gcc basim/basim.c myCrypto.c -o basim/basim -lcrypto
 gcc dispatcher.c wrappers.c -o dispatcher -lcrypto
 
 # Generates key
@@ -59,9 +59,12 @@ echo
 echo "==== Amal's LOG ======"
 cat amal/logAmal.txt
 
-# # Basim's log print
-# echo
-# echo "==== Basim's LOG ======"
-# cat basim/logBasim.txt
+# Basim's log print
+echo
+echo "==== Basim's LOG ======"
+cat basim/logBasim.txt
 
+# Check if they're the same
+echo
+echo "==== File Diff Check ===="
 diff -s ../bunny.mp4 bunny.decr

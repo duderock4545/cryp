@@ -7,11 +7,11 @@ echo
 rm -f genkey key.bin iv.bin
 rm -f amal/amal amal/logAmal.txt amal/ciphertext.bin
 rm -f basim/logBasim.txt basim/decryptedtext.bin
-rm -f bunny amal/key.bin amal/iv.bin basim/key.bin basim/iv.bin
+rm -f bunny.mp4 amal/key.bin amal/iv.bin basim/key.bin basim/iv.bin
 rm -f 4 6 dispatcher bunny.decr
 
 # Creates symbolic link
-ln -s ../bunny.mp4 bunny
+ln -s ../bunny.mp4 bunny.mp4
 
 # Builds the executibles
 gcc genkey.c -o genkey -lcrypto

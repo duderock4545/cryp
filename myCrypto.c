@@ -140,9 +140,9 @@ int encryptFile( int fd_in, int fd_out, const uint8_t *key, const uint8_t *iv )
         handleErrors("EncryptFile: failed to EncryptInit_ex");
         
     // Loops by reading a chunk of plaintext, encrypting it, then writing to fd_out
-    while (plaintext_len = read(fd_in, plaintext, PLAINTEXT_LEN_MAX))
+    while ( ( plaintext_len = read(fd_in, plaintext, PLAINTEXT_LEN_MAX) ) > 0 )
     {
-        fprintf(stdout, "\n%d\n", plaintext_len);
+        fprintf(stdout, "\nplaintext_len  = %d\n", plaintext_len);
         // Encrypt the chunk of bytes read from fd_in
         status = EVP_EncryptUpdate(ctx, ciphertext, &update_len, plaintext, plaintext_len);
         if (status != 1)
@@ -155,7 +155,7 @@ int encryptFile( int fd_in, int fd_out, const uint8_t *key, const uint8_t *iv )
         write(fd_out, ciphertext, update_len);
 
         // Reset plaintext array
-        memset(plaintext, '\0', sizeof(plaintext));
+        //memset(plaintext, '\0', sizeof(plaintext));
     }
 
     if (plaintext_len == -1)
@@ -167,6 +167,7 @@ int encryptFile( int fd_in, int fd_out, const uint8_t *key, const uint8_t *iv )
     if (status != 1)
         handleErrors("encrypt: failed to EncryptFinal_ex");
 
+    write(fd_out, ciphertext, update_len);
     // Free context
     EVP_CIPHER_CTX_free(ctx);
 

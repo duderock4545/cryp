@@ -82,7 +82,7 @@ void main(int argc, char *argv[]) {
     }
 
     // Encrypt the file
-    int bunny_cipher_len = encryptFile( fd_bunny, fd_data, (const uint8_t *) &fd_key, (const uint8_t *) &fd_iv );
+    int bunny_cipher_len = encryptFile( fd_bunny, fd_data, key, iv);
 
     // write to data channel with the num of bytes 
     // uint8_t bunny_ciphertext[bunny_cipher_len];

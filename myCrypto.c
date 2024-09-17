@@ -124,20 +124,53 @@ static unsigned char   plaintext [ PLAINTEXT_LEN_MAX ] , // Temporarily store pl
 int encryptFile( int fd_in, int fd_out, const uint8_t *key, const uint8_t *iv )
 {
     // Num of bytes read per loop, total bytes of cipher
-    int read_len, cipher_len = 0;
+    unsigned plaintext_len, encrypted_len, update_len = 0;
 
+    // Error status buffer
+    int status;
+
+    // Create the context for the decryption
+    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+    if (!ctx) 
+        handleErrors("EncryptFile: failed to create CTX");
+
+    // Initialize the encryption
+    status = EVP_EncryptInit_ex (ctx, ALGORITHM(), NULL, key, iv);
+    if (status != 1)
+        handleErrors("EncryptFile: failed to EncryptInit_ex");
+        
     // Loops by reading a chunk of plaintext, encrypting it, then writing to fd_out
-    while ((read_len = read(fd_in, (char *) plaintext, PLAINTEXT_LEN_MAX)) > -1)
+    while (plaintext_len = read(fd_in, plaintext, PLAINTEXT_LEN_MAX))
     {
-        // Encrypts the plaintext given and assigns the saves the len of ciphertext
-        int write_len = encrypt((char *) plaintext, read_len, key, iv, (char *) ciphertext);
-        cipher_len += write_len;
+        fprintf(stdout, "\n%d\n", plaintext_len);
+        // Encrypt the chunk of bytes read from fd_in
+        status = EVP_EncryptUpdate(ctx, ciphertext, &update_len, plaintext, plaintext_len);
+        if (status != 1)
+            handleErrors("encrypt: failed to EncryptUpdate");
+
+        // Update total encryption length
+        encrypted_len += update_len;
 
         // Writes ciphertext to fd_out
-        write(fd_out, (char *) ciphertext, write_len);
+        write(fd_out, ciphertext, update_len);
+
+        // Reset plaintext array
+        memset(plaintext, '\0', sizeof(plaintext));
     }
 
-    return cipher_len;
+    if (plaintext_len == -1)
+    {
+        handleErrors("encrypt: failed to read plaintext");
+    }
+    // Finalize encryption
+    status = EVP_EncryptFinal_ex(ctx, ciphertext, &update_len);
+    if (status != 1)
+        handleErrors("encrypt: failed to EncryptFinal_ex");
+
+    // Free context
+    EVP_CIPHER_CTX_free(ctx);
+
+    return encrypted_len + update_len;
 }
 
 //-----------------------------------------------------------------------------
